@@ -47,6 +47,8 @@ class Carhome {
    String getFormattedDate() {
     return DateFormat('dd/MM/yyyy').format(dateOfFirstRegistration);
   }
-
+    double getPriceAsDouble() {
+    return double.tryParse(price) ?? 0.0; // Converte il prezzo in double
+  }
   
 }

@@ -36,7 +36,7 @@ Future<List<Carhome>> cercaAuto(String query) async {
 }
 
 class CarhomeWidget extends StatefulWidget {
-  const CarhomeWidget({Key? key}) : super(key: key);
+  const CarhomeWidget({super.key});
 
   @override
   _CarhomeWidgetState createState() => _CarhomeWidgetState();
@@ -44,12 +44,34 @@ class CarhomeWidget extends StatefulWidget {
 
 class _CarhomeWidgetState extends State<CarhomeWidget> {
   late Future<List<Carhome>> cars;
+  String dropdownValue = 'Ultimi arrivi'; // Valore iniziale del dropdown
+  List<Carhome> carList = []; // Lista di auto da visualizzare
 
   @override
   void initState() {
     super.initState();
     cars = cercaAuto('');
-    
+  }
+
+  // Funzione per ordinare le auto in base al filtro selezionato
+  void sortCars() {
+    switch (dropdownValue) {
+      case 'Ultimi arrivi':
+      carList.sort((a, b) => a.id.compareTo(b.id));
+      break;
+      case 'Marca (A-Z)':
+        carList.sort((a, b) => a.title.compareTo(b.title));
+        break;
+      case 'Marca (Z-A)':
+        carList.sort((a, b) => b.title.compareTo(a.title));
+        break;
+         case 'Prezzo più basso':
+        carList.sort((a, b) => a.getPriceAsDouble().compareTo(b.getPriceAsDouble())); // Usa la conversione
+        break;
+      case 'Prezzo più alto':
+        carList.sort((a, b) => b.getPriceAsDouble().compareTo(a.getPriceAsDouble())); // Usa la conversione
+        break;
+    }
   }
 
   @override
@@ -58,12 +80,49 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
       future: cars,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final car = snapshot.data![index];
-              return _buildCarhome(car);
-            },
+          carList = snapshot.data!;
+          sortCars(); // Ordina le auto in base al filtro
+
+          return Column(
+            children: [
+              // Dropdown menu per il filtro
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DropdownButton<String>(
+                  value: dropdownValue,
+                  icon: const Icon(Icons.arrow_downward),
+                  isExpanded: true,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      dropdownValue = newValue!;
+                      sortCars(); // Riordina le auto quando il filtro cambia
+                    });
+                  },
+                  items: <String>[
+                    'Ultimi arrivi',
+                    'Marca (A-Z)',
+                    'Marca (Z-A)',
+                    'Prezzo più basso',
+                    'Prezzo più alto'
+                  ].map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                ),
+              ),
+              // Lista delle auto
+              Expanded(
+                child: ListView.builder(
+                  itemCount: carList.length,
+                  itemBuilder: (context, index) {
+                    final car = carList[index];
+                    return _buildCarhome(car);
+                  },
+                ),
+              ),
+            ],
           );
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -74,21 +133,21 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
     );
   }
 
- Widget _buildCarhome(Carhome car) {
-  return StatefulBuilder(
-    builder: (BuildContext context, StateSetter setState) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  if (car.image != null)
-                    Image.network('http://10.11.11.124:1337${car.image!}'),
+  Widget _buildCarhome(Carhome car) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    if (car.image != null)
+                      Image.network('http://10.11.11.124:1337${car.image!}'),
 
-                  Positioned(
+                    Positioned(
                       top: 8,
                       left: 8,
                       child: GestureDetector(
@@ -99,102 +158,101 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
 
                             // Aggiorna lo stato localmente
                             setState(() {
-                              car.setIsFavorited(newFavoriteStatus); 
+                              car.setIsFavorited(newFavoriteStatus);
                             });
                           } else {
                             // Se non è loggato, reindirizza alla pagina di login
+                            // ignore: use_build_context_synchronously
                             Navigator.pushNamed(context, '/login');
                           }
                         },
                         child: Icon(
                           car.isFavorite ? Icons.favorite : Icons.favorite_border, // Icona piena o vuota
-                          color: car.isFavorite 
+                          color: car.isFavorite
                               ? const Color.fromRGBO(255, 155, 4, 1) // Colore arancione se nei preferiti
                               : const Color.fromARGB(255, 4, 4, 4),  // Colore nero se non è nei preferiti
                           size: 30,
                         ),
                       ),
-                  ),
-
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    car.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      car.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '€${car.price}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromRGBO(255, 155, 4, 1), // Arancione per il prezzo
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  car.littleDescription,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Km: ${car.kilometers}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  car.gearBox,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  car.getFormattedDate(),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CarDetailWidget(carId: car.id),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: const Color.fromRGBO(255, 155, 4, 1),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
                     ),
                   ),
-                  Text(
-                    '€${car.price}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromRGBO(255, 155, 4, 1), // Arancione per il prezzo
+                  child: const SizedBox(
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(
+                        'Visualizza Auto',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                car.littleDescription,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Km: ${car.kilometers}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                car.gearBox,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                car.getFormattedDate(),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CarDetailWidget(carId: car.id),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: const Color.fromRGBO(255, 155, 4, 1),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
                   ),
                 ),
-                child: const SizedBox(
-                  width: double.infinity,
-                  child: Center(
-                    child: Text(
-                      'Visualizza Auto',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 }
 
 Future<bool> isUserLoggedIn() async {
@@ -234,17 +292,13 @@ Future<bool> toggleFavorite(int carId, bool isCurrentlyFavorited) async {
     if (response.statusCode == 200) {
       // Considera il cambiamento di stato in base all'azione
       bool newFavoriteStatus = !isCurrentlyFavorited;
-      print(newFavoriteStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti');
       return newFavoriteStatus;
     } else {
-      print('Errore durante l\'aggiornamento dei preferiti: ${response.statusCode}');
-      return false;
+      print('Errore nella gestione dei preferiti: ${response.statusCode}');
+      return isCurrentlyFavorited; // Ritorna lo stato originale in caso di errore
     }
   } catch (e) {
-    print('Errore durante l\'aggiornamento dei preferiti: $e');
-    return false;
+    print('Errore nella richiesta di aggiunta/rimozione preferito: $e');
+    return isCurrentlyFavorited; // Ritorna lo stato originale in caso di errore
   }
 }
-
-
-
