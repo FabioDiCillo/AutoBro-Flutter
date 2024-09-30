@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names, use_key_in_widget_constructors, library_private_types_in_public_api
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -19,9 +21,11 @@ class Favorite {
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchFavoriteVehicles(int favourite_veichle) async {
+Future<List<Map<String, dynamic>>> fetchFavoriteVehicles(
+    int favourite_veichle) async {
   List<Map<String, dynamic>> vehicles = [];
-  final url = Uri.parse('http://10.11.11.124:1337/api/favourite-veichles-detail/$favourite_veichle');
+  final url = Uri.parse(
+      'http://10.11.11.116:1337/api/favourite-veichles-detail/$favourite_veichle');
 
   try {
     final response = await http.get(url);
@@ -37,10 +41,12 @@ Future<List<Map<String, dynamic>>> fetchFavoriteVehicles(int favourite_veichle) 
         throw Exception('Oggetto JSON non è valido');
       }
     } else if (response.statusCode == 404) {
-      throw Exception('Veicolo preferito non trovato per ID: $favourite_veichle');
+      throw Exception(
+          'Veicolo preferito non trovato per ID: $favourite_veichle');
     } else {
       print('Corpo della risposta: ${response.body}');
-      throw Exception('Errore nel caricamento dei dati: ${response.statusCode}');
+      throw Exception(
+          'Errore nel caricamento dei dati: ${response.statusCode}');
     }
   } catch (e) {
     print('Errore nella ricerca delle auto preferite: $e');
@@ -86,7 +92,8 @@ class _FavoriteVehiclesWidgetState extends State<FavoriteVehiclesWidget> {
             },
           );
         } else if (snapshot.hasError) {
-          return Center(child: Text('Errore: ${snapshot.error}'));
+          return const Center(
+              child: Text('Effettua il login per visualizzare i preferiti'));
         }
         return const Center(child: CircularProgressIndicator());
       },
@@ -101,7 +108,7 @@ class _FavoriteVehiclesWidgetState extends State<FavoriteVehiclesWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (vehicle['image'] != null)
-              Image.network('http://10.11.11.124:1337${vehicle['image']}'),
+              Image.network('http://10.11.11.116:1337${vehicle['image']}'),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,15 +116,16 @@ class _FavoriteVehiclesWidgetState extends State<FavoriteVehiclesWidget> {
                 Expanded(
                   child: Text(
                     vehicle['title'],
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Text(
-                      '€${vehicle['price'] != null ? NumberFormat('#,###','it_IT').format(int.tryParse(vehicle['price'].toString()) ?? 0) : 'N/A'}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(255, 155, 4, 1),
+                  '€${vehicle['price'] != null ? NumberFormat('#,###', 'it_IT').format(int.tryParse(vehicle['price'].toString()) ?? 0) : 'N/A'}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(255, 155, 4, 1),
                   ),
                 )
               ],
@@ -125,24 +133,27 @@ class _FavoriteVehiclesWidgetState extends State<FavoriteVehiclesWidget> {
             const SizedBox(height: 4),
             Text(
               vehicle['littleDescription'],
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             ),
             const SizedBox(height: 4),
             Text(
-             'KM: ${vehicle['kilometers'] != null ? NumberFormat('#,###','it_IT').format(int.tryParse(vehicle['kilometers'].toString()) ?? 0) : 'N/A'}',
+              'KM: ${vehicle['kilometers'] != null ? NumberFormat('#,###', 'it_IT').format(int.tryParse(vehicle['kilometers'].toString()) ?? 0) : 'N/A'}',
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(vehicle['gearBox'], style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 4),
-            Text(vehicle['dateOfFirstRegistration'], style: const TextStyle(fontSize: 14)),
+            Text(vehicle['dateOfFirstRegistration'],
+                style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CarDetailWidget(carId: vehicle['id']), // Passa l'ID della macchina
+                    builder: (context) => CarDetailWidget(
+                        carId: vehicle['id']), // Passa l'ID della macchina
                   ),
                 );
               },

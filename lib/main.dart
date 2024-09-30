@@ -1,36 +1,9 @@
-// import 'package:flutter/material.dart';
-// import 'homepage.dart';
+// ignore_for_file: use_key_in_widget_constructors
 
-// void main() => runApp(const MyApp());
-
-// class MyApp extends StatefulWidget {   
-//   const MyApp({super.key});
-
-//   @override
-//   State<MyApp> createState() => _MyAppState();
-// }
-
-// class _MyAppState extends State<MyApp> {
-//   @override
-//   void initState() {
-//     super.initState(); 
-//   }
-
-// @override
-//   Widget build(BuildContext context) {
-//     return const MaterialApp(
-//       // title: 'Flutter Demo',
-//       // theme: ThemeData(
-//       //   primarySwatch: Colors.blue,
-//       // ),
-//       home: Homepage(username: '',), 
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'homepage.dart';
-import 'pages/login.dart'; // Assicurati che il percorso sia corretto
-import 'pages/buycar.dart'; // Assicurati che il percorso sia corretto
+import 'pages/login.dart';
+import 'pages/buycar.dart';
 
 void main() => runApp(const MyApp());
 
@@ -40,12 +13,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'La tua App', // Opzionale: aggiungi un titolo
+      title: 'La tua App',
       initialRoute: '/',
       routes: {
-        '/': (context) => const Homepage(username: ''), // Assicurati che la tua Homepage sia corretta
-        '/login': (context) => const LoginPage(), // Aggiungi la tua LoginPage qui
-        '/buycar': (context) => const PaymentPage(carId: 0), // Aggiungi la tua PaymentPage qui con carId di default
+        '/': (context) => const Homepage(username: ''),
+        '/login': (context) => const LoginPage(),
+        '/buycar': (context) => const PaymentPage(
+              carId: 0,
+              carPrice: '0',
+            ),
       },
       onUnknownRoute: (RouteSettings settings) {
         return MaterialPageRoute(builder: (context) => UnknownPage());

@@ -74,7 +74,7 @@ class _SearchState extends State<Search> {
       final queryString = keywords.join('&query=');
 
       var response = await http.get(
-        Uri.parse('http://10.11.11.124:1337/api/product-search/search?query=$queryString'),
+        Uri.parse('http://10.11.11.116:1337/api/product-search/search?query=$queryString'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -199,7 +199,7 @@ class _SearchState extends State<Search> {
                 Stack(
                   children: [
                     if (car.image != null)
-                      Image.network('http://10.11.11.124:1337${car.image!}'),
+                      Image.network('http://10.11.11.116:1337${car.image!}'),
                     
                     Positioned(
                       top: 8,

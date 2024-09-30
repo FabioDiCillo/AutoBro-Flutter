@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print, library_private_typ
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<List<Carhome>> cercaAuto(String query) async {
   List<Carhome> cars = [];
   try {
-    var response = await http.get(Uri.parse('http://10.11.11.124:1337/api/products-detail'));
+    var response = await http.get(Uri.parse('http://10.11.11.116:1337/api/products-detail'));
 
     if (response.statusCode == 200) {
       var body = json.decode(response.body);
@@ -39,6 +40,7 @@ class CarhomeWidget extends StatefulWidget {
   const CarhomeWidget({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CarhomeWidgetState createState() => _CarhomeWidgetState();
 }
 
@@ -66,10 +68,10 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
         carList.sort((a, b) => b.title.compareTo(a.title));
         break;
          case 'Prezzo più basso':
-        carList.sort((a, b) => a.getPriceAsDouble().compareTo(b.getPriceAsDouble())); // Usa la conversione
+        carList.sort((a, b) => a.getPriceAsDouble().compareTo(b.getPriceAsDouble())); 
         break;
       case 'Prezzo più alto':
-        carList.sort((a, b) => b.getPriceAsDouble().compareTo(a.getPriceAsDouble())); // Usa la conversione
+        carList.sort((a, b) => b.getPriceAsDouble().compareTo(a.getPriceAsDouble())); 
         break;
     }
   }
@@ -145,7 +147,7 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
                 Stack(
                   children: [
                     if (car.image != null)
-                      Image.network('http://10.11.11.124:1337${car.image!}'),
+                      Image.network('http://10.11.11.116:1337${car.image!}'),
 
                     Positioned(
                       top: 8,
@@ -258,7 +260,7 @@ class _CarhomeWidgetState extends State<CarhomeWidget> {
 Future<bool> isUserLoggedIn() async {
   try {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? userId = prefs.getInt('userId'); // Ottieni l'ID utente
+    int? userId = prefs.getInt('userId'); 
     print('User ID trovato: $userId');
     return userId != null;
   } catch (e) {
@@ -290,15 +292,15 @@ Future<bool> toggleFavorite(int carId, bool isCurrentlyFavorited) async {
     );
 
     if (response.statusCode == 200) {
-      // Considera il cambiamento di stato in base all'azione
+      
       bool newFavoriteStatus = !isCurrentlyFavorited;
       return newFavoriteStatus;
     } else {
       print('Errore nella gestione dei preferiti: ${response.statusCode}');
-      return isCurrentlyFavorited; // Ritorna lo stato originale in caso di errore
+      return isCurrentlyFavorited; 
     }
   } catch (e) {
     print('Errore nella richiesta di aggiunta/rimozione preferito: $e');
-    return isCurrentlyFavorited; // Ritorna lo stato originale in caso di errore
+    return isCurrentlyFavorited; 
   }
 }
