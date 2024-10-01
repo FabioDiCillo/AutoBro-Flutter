@@ -21,7 +21,7 @@ class _HomepageState extends State<Homepage> {
 
   static List<Widget> _pages = <Widget>[
     const Home(),
-    const Search(),
+    const SearchPage(),
     FavoriteVehiclesWidget(),
     const Profile(),
   ];

@@ -11,8 +11,19 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CarhomeWidget());
-
+    return Center(
+      child: CarhomeWidget(
+        carId: 0,
+        id: null,
+        title: null,
+        littleDescription: '',
+        kilometers: 0,
+        imageUrl: '',
+        gearBox: '',
+        price: 0,
+        registrationDate: DateTime.now(),
+      ),
+    );
   }
 }
 

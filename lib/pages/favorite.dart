@@ -153,7 +153,7 @@ class _FavoriteVehiclesWidgetState extends State<FavoriteVehiclesWidget> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => CarDetailWidget(
-                        carId: vehicle['id']), // Passa l'ID della macchina
+                        carId: vehicle['id'], car: null,), // Passa l'ID della macchina
                   ),
                 );
               },

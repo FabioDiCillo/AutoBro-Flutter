@@ -36,7 +36,7 @@ class CarDetailWidget extends StatefulWidget {
 
   const CarDetailWidget({
     super.key,
-    required this.carId,
+    required this.carId, required car,
   });
 
   @override

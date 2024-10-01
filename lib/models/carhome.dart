@@ -37,6 +37,11 @@ class Carhome {
       price: json['price'] != null ? json['price'].toString() : '0',
       dateOfFirstRegistration: json['dateOfFirstRegistration'] != null ? DateTime.parse(json['dateOfFirstRegistration']) : DateTime.now(),
       image: json['image'] ?? '',
+        // image: json['image'] != null 
+        // ? (json['image'] is Map<String, dynamic> && json['image']['url'] != null 
+        //     ? json['image']['url'].toString() 
+        //     : null) 
+        // : null,
       isFavorite: json['isFavorited']?? false,
       
     );

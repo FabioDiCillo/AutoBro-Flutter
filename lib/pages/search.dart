@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import 'package:presto/components/cardetailcard.dart';
+
 
 class Carhome {
   final int id;
@@ -42,94 +42,117 @@ class Carhome {
       price: double.tryParse(json['price'].toString()) ?? 0.0,
     );
   }
-
-  String getFormattedDate() {
-    if (dateOfFirstRegistration != null) {
-      return "${dateOfFirstRegistration!.day}/${dateOfFirstRegistration!.month}/${dateOfFirstRegistration!.year}";
-    }
-    return '';
-  }
 }
 
-class Search extends StatefulWidget {
-  const Search({super.key});
+class SearchPage extends StatefulWidget {
+  const SearchPage({super.key});
 
   @override
-  State<Search> createState() => _SearchState();
+  _SearchPageState createState() => _SearchPageState();
 }
 
-class _SearchState extends State<Search> {
-  final TextEditingController _controllerRicerca = TextEditingController();
-  List<Carhome> _risultatiRicerca = [];
+class _SearchPageState extends State<SearchPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  String searchText = '';
+  String? selectedBrend;
+  String? selectedColor;
+  String? selectedTraction;
+  String? selectedFuelType;
+  String? selectedGearBox;
+  String? selectedCarType;
+
   bool _isLoading = false;
   String _errore = '';
+  List<Carhome> _risultatiRicerca = []; // Change to List<Carhome>
 
-  Future<List<Carhome>> cercaAuto(String query) async {
-    List<Carhome> cars = [];
-    try {
-      // Suddividi la query in parole chiave
-      final keywords = query.split(' ').map((word) => word.trim()).where((word) => word.isNotEmpty).toList();
+  // Filter options
+  final List<String> brendOptions = ['Abarth', 'Alfa Romeo', 'Audi', 'BMW', 'Citroën', 'Cupra', 'Dacia', 'DS Automobiles', 'EVO', 'Fiat', 'Ford', 'Honda', 'Hyundai', 'Jaguar', 'Jeep', 'Kia', 'Lancia', 'Land Rover', 'Lexus', 'MG', 'MINI', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Opel', 'Peugeot', 'Renault', 'Seat', 'Skoda', 'Smart', 'SsangYong', 'Subaru', 'Suzuki', 'Toyota', 'Volkswagen', 'Volvo'];
+  final List<String> colorOptions = ['Nero', 'Grigio', 'Bianco', 'Argento', 'Blu', 'Rosso', 'Marrone', 'Verde', 'Beige', 'Arancione', 'Oro', 'Giallo', 'Viola'];
+  final List<String> tractionOptions = ['4X4', 'Anteriore', 'Posteriore'];
+  final List<String> fuelTypeOptions = ['Ibrido', 'Diesel', 'Elettrico', 'Benzina', 'Gpl', 'Metano'];
+  final List<String> gearBoxOptions = ['Automatico', 'Manuale'];
+  final List<String> carTypeOptions = ['SUV', 'Station Wagon', 'Berlina', 'Van / Minibus', 'Coupé', 'Cabriolet', 'Pickup', 'Familiare', 'City Car', 'Compatta', 'Monovolume', 'Fuoristrada', 'Sportiva', 'Crossover', 'Altro'];
 
-      // Crea una stringa di query concatenando le parole chiave
-      final queryString = keywords.join('&query=');
-
-      var response = await http.get(
-        Uri.parse('http://10.11.11.116:1337/api/product-search/search?query=$queryString'),
-        headers: {"Content-Type": "application/json"},
-      );
-
-      if (response.statusCode == 200) {
-        var body = json.decode(response.body);
-        if (body is Map<String, dynamic> && body.containsKey('data')) {
-          var carList = body['data'];
-          if (carList is List) {
-            for (var item in carList) {
-              if (item is Map<String, dynamic>) {
-                cars.add(Carhome.fromJson(item));
-              }
-            }
-          } else {
-            throw Exception('La chiave "data" non contiene una lista');
-          }
-        } else {
-          throw Exception('Oggetto JSON non contiene la chiave "data"');
-        }
-      } else {
-        print('Errore nella richiesta: ${response.statusCode}');
-        throw Exception('Errore nel caricamento dei dati: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Errore nella ricerca: $e');
-      throw Exception('Errore durante la ricerca: $e');
-    }
-    return cars;
+  void _cancellaFiltri() {
+    setState(() {
+      searchText = '';
+      selectedBrend = null;
+      selectedColor = null;
+      selectedTraction = null;
+      selectedFuelType = null;
+      selectedGearBox = null;
+      selectedCarType = null;
+    });
   }
 
   void _eseguiRicerca() async {
+    Future<List<Carhome>> cercaAuto() async {
+      List<Carhome> cars = [];
+      try {
+        String queryString = '';
+        if (selectedBrend != null) queryString += 'brend=$selectedBrend&';
+        if (selectedColor != null) queryString += 'color=$selectedColor&';
+        if (selectedTraction != null) queryString += 'traction=$selectedTraction&';
+        if (selectedFuelType != null) queryString += 'fuelType=$selectedFuelType&';
+        if (selectedGearBox != null) queryString += 'gearBox=$selectedGearBox&';
+        if (selectedCarType != null) queryString += 'carType=$selectedCarType&';
+        if (searchText.isNotEmpty) queryString += 'query=$searchText&';
+
+        queryString = queryString.isNotEmpty
+            ? queryString.substring(0, queryString.length - 1)
+            : queryString;
+
+        var response = await http.get(
+          Uri.parse('http://10.11.11.116:1337/api/product-search/search?$queryString'),
+          headers: {"Content-Type": "application/json"},
+        );
+
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is Map<String, dynamic> && body.containsKey('data')) {
+            var carList = body['data'];
+            if (carList is List) {
+              for (var item in carList) {
+                if (item is Map<String, dynamic>) {
+                  cars.add(Carhome.fromJson(item));
+                }
+              }
+            }
+          } else {
+            throw Exception('Oggetto JSON non contiene la chiave "data"');
+          }
+        } else {
+          throw Exception('Errore nel caricamento dei dati: ${response.statusCode}');
+        }
+      } catch (e) {
+        throw Exception('Errore durante la ricerca: $e');
+      }
+      return cars;
+    }
+
     setState(() {
       _isLoading = true;
       _errore = '';
     });
 
-    if (_controllerRicerca.text.isNotEmpty) {
-      try {
-        final risultati = await cercaAuto(_controllerRicerca.text);
+    try {
+      final risultati = await cercaAuto();
+      if (risultati.isEmpty) {
         setState(() {
-          _risultatiRicerca = risultati;
-        });
-      } catch (e) {
-        setState(() {
-          _errore = e.toString();
-        });
-      } finally {
-        setState(() {
-          _isLoading = false;
+          _errore = 'Nessun veicolo presente'; // Show no vehicle message
         });
       }
-    } else {
+      setState(() {
+        _risultatiRicerca = risultati;
+      });
+    } catch (e) {
+      setState(() {
+        _errore = e.toString();
+      });
+    } finally {
       setState(() {
         _isLoading = false;
-        _errore = 'Inserisci un termine di ricerca';
       });
     }
   }
@@ -137,6 +160,7 @@ class _SearchState extends State<Search> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text.rich(
           TextSpan(
@@ -150,155 +174,229 @@ class _SearchState extends State<Search> {
             ],
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: TextField(
-              controller: _controllerRicerca,
-              decoration: InputDecoration(
-                hintText: 'Cerca per modello, marca, colore, ecc.',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _eseguiRicerca,
-                ),
-              ),
-            ),
-          ),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (_errore.isNotEmpty)
-            Center(child: Text('Errore: $_errore'))
-          else if (_risultatiRicerca.isEmpty)
-            const Center(child: Text('Nessun risultato trovato')),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _risultatiRicerca.length,
-              itemBuilder: (context, index) {
-                final car = _risultatiRicerca[index];
-                return _buildCarhome(car);
-              },
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              _scaffoldKey.currentState?.openEndDrawer();
+            },
           ),
         ],
       ),
-    );
-  }
-  Widget _buildCarhome(Carhome car) {
-    bool isFavorited = false;
-
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    if (car.image != null)
-                      Image.network('http://10.11.11.116:1337${car.image!}'),
-                    
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isFavorited = !isFavorited;
-                          });
-
-                          if (isFavorited) {
-                            print('Aggiunto ai preferiti: ${car.title}');
-                          } else {
-                            print('Rimosso dai preferiti: ${car.title}');
-                          }
-                        },
-                        child: Icon(
-                          isFavorited ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorited ? const Color.fromRGBO(255, 155, 4, 1) : const Color.fromARGB(255, 4, 4, 4),
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      car.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '€${NumberFormat('#,###','it_IT').format(car.price)}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromRGBO(255, 155, 4, 1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  car.littleDescription,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'KM: ${NumberFormat('#,###','it_IT').format(car.kilometers)}',
-              style: const TextStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  car.gearBox,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  car.getFormattedDate(),
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CarDetailWidget(carId: car.id),
-                        ),
-                      );
-                    },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    backgroundColor: const Color.fromRGBO(255, 155, 4, 1),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text(
-                        'Visualizza Auto',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+      endDrawer: Drawer(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Filtri di Ricerca', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+               TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchText = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Cerca auto...',
+                prefixIcon: Icon(Icons.search), // Added search icon
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Brend'),
+                value: selectedBrend,
+                items: brendOptions.map((brend) {
+                  return DropdownMenuItem(
+                    value: brend,
+                    child: Text(brend),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedBrend = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Colore'),
+                value: selectedColor,
+                items: colorOptions.map((color) {
+                  return DropdownMenuItem(
+                    value: color,
+                    child: Text(color),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedColor = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Traction'),
+                value: selectedTraction,
+                items: tractionOptions.map((traction) {
+                  return DropdownMenuItem(
+                    value: traction,
+                    child: Text(traction),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedTraction = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Tipo di Carburante'),
+                value: selectedFuelType,
+                items: fuelTypeOptions.map((fuelType) {
+                  return DropdownMenuItem(
+                    value: fuelType,
+                    child: Text(fuelType),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedFuelType = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Cambio'),
+                value: selectedGearBox,
+                items: gearBoxOptions.map((gearBox) {
+                  return DropdownMenuItem(
+                    value: gearBox,
+                    child: Text(gearBox),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedGearBox = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Tipo di Auto'),
+                value: selectedCarType,
+                items: carTypeOptions.map((carType) {
+                  return DropdownMenuItem(
+                    value: carType,
+                    child: Text(carType),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedCarType = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _eseguiRicerca();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: const Text('Applica', style: TextStyle(color: Colors.black)),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _cancellaFiltri();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: const Text('Cancella', style: TextStyle(color: Colors.black)),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+           
+            const SizedBox(height: 16),
+            if (_isLoading) const CircularProgressIndicator(),
+            if (_errore.isNotEmpty) Text(_errore, style: const TextStyle(color: Colors.red)),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _risultatiRicerca.length,
+                itemBuilder: (context, index) {
+                  final car = _risultatiRicerca[index];
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (car.image != null)
+                            Image.network('http://10.11.11.116:1337${car.image!}'),
+                          Text(car.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(car.littleDescription),
+                          const SizedBox(height: 8),
+                          Text('Km: ${car.kilometers}'),
+                          const SizedBox(height: 8),
+                          Text(car.gearBox),
+                          const SizedBox(height: 8),
+                          Text(car.dateOfFirstRegistration?.toLocal().toString().split(' ')[0] ?? 'N/A'),
+                          const SizedBox(height: 8),
+                          Text(
+                            '€ ${car.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d+)(\d{3})'), (Match m) => '${m[1]}.${m[2]}')}', // Price formatting
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color.fromRGBO(255, 144, 4, 1)),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CarDetailWidget(carId: car.id, car: car),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.zero,
+                                ),
+                              ),
+                              child: const Text('Visualizza Auto', style: TextStyle(color: Colors.black)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
